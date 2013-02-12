@@ -1,13 +1,5 @@
-# datahog
+# Datahog
 
-A Clojure library designed to ... well, that part is up to you.
+In progress.
 
-## Usage
-
-FIXME
-
-## License
-
-Copyright © 2012 FIXME
-
-Distributed under the Eclipse Public License, the same as Clojure.
+A transaction-safe graph data store built on top of PostgreSQL.

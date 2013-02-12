@@ -29,20 +29,22 @@
   {:suffix "keyword"
    :sql-type "VARCHAR"})
 
-(def relation-tables
+(def relation-tables0
   [string-table integer-table boolean-table instant-table uuid-table ref-table keyword-table])
 
-(defn sequences [db]
+(defn sequences0 [db]
   [(str "CREATE SEQUENCE " (:prefix db) "_tuple_id_seq")])
 
-
-(defn system-tables [db]
-  [(str "CREATE TABLE " (:prefix db) "_transactions (id BIGSERIAL PRIMARY KEY NOT NULL)")
+(defn system-tables0 [db]
+  [(str "CREATE TABLE " (:prefix db) "_transactions "
+        " (id BIGSERIAL PRIMARY KEY NOT NULL, "
+        "  closed BOOLEAN NOT NULL DEFAULT FALSE"
+        ")")
    (str "CREATE TABLE " (:prefix db) "_withdrawals"
         " (id BIGINT PRIMARY KEY NOT NULL,"
         "  trn BIGINT REFERENCES " (:prefix db) "_transactions ON DELETE RESTRICT NOT NULL)")])
 
-(defn rel-create [db t]
+(defn rel-create0 [db t]
   [(str "CREATE TABLE " (:prefix db) "_" (:suffix t)
         " (id BIGINT             NOT NULL PRIMARY KEY DEFAULT nextval('" (:prefix db) "_tuple_id_seq'), "
         "  ent UUID              NOT NULL,"
@@ -50,13 +52,14 @@
         "  obj " (:sql-type t) " NOT NULL,"
         "  trn BIGINT REFERENCES " (:prefix db) "_transactions(id) ON DELETE RESTRICT NOT NULL"
         ")")
-   (str "CREATE INDEX " (:prefix db) "_" (:suffix t) "_rel_idx ON " (:prefix db) "_" (:suffix t) " (rel)")
-   (str "CREATE INDEX " (:prefix db) "_" (:suffix t) "_obj_idx ON " (:prefix db) "_" (:suffix t) " (obj)")])
+   (str "CREATE INDEX " (:prefix db) "_" (:suffix t) "_rel_idx ON " (:prefix db) "_" (:suffix t) " (rel, ent, obj, id, trn)")
+   (str "CREATE INDEX " (:prefix db) "_" (:suffix t) "_obj_idx ON " (:prefix db) "_" (:suffix t) " (obj, ent, rel, id, trn)")
+   (str "CREATE INDEX " (:prefix db) "_" (:suffix t) "_ent_idx ON " (:prefix db) "_" (:suffix t) " (ent, rel, obj, id, trn)")])
 
-(defn setup [db]
+(defn setup0 [db]
   (sql/with-connection (:url db)
     (sql/transaction
-     (apply sql/do-commands (sequences db))
-     (apply sql/do-commands (system-tables db))
-     (apply sql/do-commands (mapcat #(rel-create db %) relation-tables))))
+     (apply sql/do-commands (sequences0 db))
+     (apply sql/do-commands (system-tables0 db))
+     (apply sql/do-commands (mapcat #(rel-create0 db %) relation-tables0))))
   nil)
